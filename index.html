@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>南京旅游地标 | 探索六朝古都</title>
+  <meta name="description" content="探索南京著名旅游景点：中山陵、夫子庙、明城墙、玄武湖、总统府、鸡鸣寺。精美动画风格插画，互动地图导览。">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: 'oklch(0.98 0.005 80)',
+            foreground: 'oklch(0.25 0.02 30)',
+            card: 'oklch(1 0 0)',
+            'card-foreground': 'oklch(0.25 0.02 30)',
+            primary: 'oklch(0.55 0.15 25)',
+            'primary-foreground': 'oklch(0.98 0.005 80)',
+            secondary: 'oklch(0.95 0.02 80)',
+            'secondary-foreground': 'oklch(0.35 0.02 30)',
+            muted: 'oklch(0.94 0.01 80)',
+            'muted-foreground': 'oklch(0.5 0.02 30)',
+            accent: 'oklch(0.75 0.12 50)',
+            'accent-foreground': 'oklch(0.25 0.02 30)',
+            border: 'oklch(0.90 0.02 80)',
+          },
+          fontFamily: {
+            sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    @keyframes ping {
+      75%, 100% {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+    @keyframes zoomIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+    .animate-fade-in-up {
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+    .animate-pulse-custom {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    .animate-ping-custom {
+      animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    .animate-zoom-in {
+      animation: zoomIn 0.5s ease-out forwards;
+    }
+    .text-balance {
+      text-wrap: balance;
+    }
+    .text-pretty {
+      text-wrap: pretty;
+    }
+  </style>
+</head>
+<body class="font-sans antialiased bg-background min-h-screen">
+  <div id="app"></div>
+
+  <script>
+    // 景点数据
+    const landmarks = [
+      {
+        id: 'zhongshan-mausoleum',
+        name: '中山陵',
+        nameEn: 'Sun Yat-sen Mausoleum',
+        description: '中山陵是中国近代伟大的民主革命先行者孙中山先生的陵寝，位于南京市玄武区紫金山南麓钟山风景区内。陵墓于1926年春动工，1929年夏建成。整个建筑群依山势而建，由南往北沿中轴线排列，形成一个警钟形图案。392级石阶连接牌坊、陵门、碑亭、祭堂和墓室，气势恢宏，融汇中西建筑风格。',
+        image: '/images/zhongshan-mausoleum.jpg',
+        coordinates: { lat: 32.0584, lng: 118.8553 },
+        mapPosition: { x: 75, y: 35 }
+      },
+      {
+        id: 'fuzimiao',
+        name: '夫子庙',
+        nameEn: 'Confucius Temple',
+        description: '夫子庙位于南京市秦淮区秦淮河北岸，始建于东晋成帝咸康三年（337年），是供奉和祭祀孔子的地方。夫子庙是中国四大文庙之一，被誉为"天下文枢"。如今的夫子庙已成为集古迹旅游、文化展览、民俗风情、购物美食于一体的旅游胜地，秦淮河畔的灯会更是享誉海内外。',
+        image: '/images/fuzimiao.jpg',
+        coordinates: { lat: 32.0167, lng: 118.7864 },
+        mapPosition: { x: 45, y: 70 }
+      },
+      {
+        id: 'ming-city-wall',
+        name: '明城墙',
+        nameEn: 'Ming City Wall',
+        description: '南京明城墙始建于明朝洪武元年（1368年），历时21年建成，是世界上现存最长、规模最大、保存最好的古代城垣。城墙全长约35公里，现存约25公里，包括13座城门。其中中华门（原名聚宝门）是中国现存最大的城堡式瓮城，被列为全国重点文物保护单位。',
+        image: '/images/ming-city-wall.jpg',
+        coordinates: { lat: 32.0056, lng: 118.7783 },
+        mapPosition: { x: 40, y: 85 }
+      },
+      {
+        id: 'xuanwu-lake',
+        name: '玄武湖',
+        nameEn: 'Xuanwu Lake',
+        description: '玄武湖位于南京市玄武区，是中国最大的皇家园林湖泊，被誉为"金陵明珠"。湖中有五个洲：环洲、樱洲、菱洲、梁洲和翠洲，洲洲堤桥相通。玄武湖风景秀丽，春季樱花烂漫，夏季荷花盛开，秋季菊花争艳，冬季梅花飘香，一年四季皆有美景可赏。',
+        image: '/images/xuanwu-lake.jpg',
+        coordinates: { lat: 32.0744, lng: 118.7967 },
+        mapPosition: { x: 50, y: 25 }
+      },
+      {
+        id: 'presidential-palace',
+        name: '总统府',
+        nameEn: 'Presidential Palace',
+        description: '南京总统府位于南京市玄武区长江路，是中国近代史遗址群的重要组成部分。这里曾是明朝汉王府、清朝两江总督署、太平天国天王府，以及中华民国临时大总统府和国民政府所在地。建筑群融合了中西方建筑风格，园林布局精美，是了解中国近现代史的重要窗口。',
+        image: '/images/presidential-palace.jpg',
+        coordinates: { lat: 32.0462, lng: 118.7961 },
+        mapPosition: { x: 55, y: 45 }
+      },
+      {
+        id: 'jiming-temple',
+        name: '鸡鸣寺',
+        nameEn: 'Jiming Temple',
+        description: '鸡鸣寺位于南京市玄武区鸡笼山东麓，是南京最古老的梵刹之一，始建于西晋永康元年（300年）。寺以"南朝四百八十寺"首刹而闻名，是南京香火最旺的寺庙之一。每年春季，寺前的樱花大道成为南京最美的赏樱胜地，粉色的樱花与黄色的院墙相映成趣。',
+        image: '/images/jiming-temple.jpg',
+        coordinates: { lat: 32.0647, lng: 118.7939 },
+        mapPosition: { x: 48, y: 32 }
+      }
+    ];
+
+    // 应用状态
+    let selectedLandmark = null;
+    let detailLandmark = null;
+    let animatedLines = [];
+
+    // 渲染函数
+    function render() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <main class="min-h-screen bg-background">
+          <!-- 头部 -->
+          <header class="relative overflow-hidden border-b border-border" style="background: linear-gradient(to bottom right, rgba(139, 69, 19, 0.1), transparent, rgba(205, 133, 63, 0.1));">
+            <div class="absolute inset-0 opacity-30">
+              <div class="absolute top-10 left-10 w-64 h-64 rounded-full blur-3xl" style="background: rgba(139, 69, 19, 0.2);"></div>
+              <div class="absolute bottom-10 right-10 w-96 h-96 rounded-full blur-3xl" style="background: rgba(205, 133, 63, 0.2);"></div>
+            </div>
+            
+            <div class="relative max-w-7xl mx-auto px-4 py-16 md:py-24">
+              <div class="flex items-center gap-3 mb-6">
+                <div class="p-2 rounded-xl" style="background: rgba(139, 69, 19, 0.1);">
+                  <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                    <path stroke-linecap="round" stroke-width="2" d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+                  </svg>
+                </div>
+                <span class="text-sm font-medium text-primary">探索六朝古都</span>
+              </div>
+              
+              <h1 class="text-4xl md:text-6xl font-bold text-foreground text-balance">
+                南京旅游地标
+              </h1>
+              <p class="mt-4 text-lg md:text-xl text-muted-foreground max-w-2xl text-pretty leading-relaxed">
+                金陵自古帝王州，悠悠秦淮水悠悠。从六朝烟雨到民国风华，南京承载着千年的历史与文化。点击探索这座城市的标志性景点。
+              </p>
+              
+              <div class="flex items-center gap-6 mt-8 text-sm text-muted-foreground">
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  <span>${landmarks.length} 个精选景点</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                  </svg>
+                  <span>动画风格插画</span>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <!-- 主内容区 -->
+          <div class="max-w-7xl mx-auto px-4 py-12">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+              <!-- 地图区域 -->
+              <div class="lg:sticky lg:top-8">
+                <div class="mb-4">
+                  <h2 class="text-xl font-semibold text-foreground">互动地图</h2>
+                  <p class="text-sm text-muted-foreground">点击地图上的标记查看景点详情</p>
+                </div>
+                <div class="h-[500px] md:h-[600px]">
+                  ${renderMap()}
+                </div>
+              </div>
+
+              <!-- 景点卡片列表 -->
+              <div>
+                <div class="mb-6">
+                  <h2 class="text-xl font-semibold text-foreground">精选景点</h2>
+                  <p class="text-sm text-muted-foreground">点击卡片选中，再次点击查看详情</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  ${landmarks.map((landmark, index) => renderCard(landmark, index)).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 页脚 -->
+          <footer class="border-t border-border" style="background: rgba(0,0,0,0.02);">
+            <div class="max-w-7xl mx-auto px-4 py-8">
+              <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                  <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                    <path stroke-linecap="round" stroke-width="2" d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+                  </svg>
+                  <span class="font-medium text-foreground">南京旅游指南</span>
+                </div>
+                <p class="text-sm text-muted-foreground text-center">
+                  图片采用 AI 生成的动画风格插画，仅供参考
+                </p>
+              </div>
+            </div>
+          </footer>
+
+          <!-- 详情弹窗 -->
+          ${detailLandmark ? renderDetail() : ''}
+        </main>
+      `;
+
+      // 绑定事件
+      bindEvents();
+    }
+
+    function renderMap() {
+      const sortedLandmarks = [...landmarks].sort((a, b) => a.mapPosition.y - b.mapPosition.y);
+      const lines = sortedLandmarks.slice(1).map((landmark, index) => ({
+        from: sortedLandmarks[index],
+        to: landmark,
+        index: index + 1
+      }));
+
+      return `
+        <div class="relative w-full h-full min-h-[500px] rounded-2xl overflow-hidden" style="background: rgba(0,0,0,0.03);">
+          <!-- 地图背景装饰 -->
+          <div class="absolute inset-0 opacity-20">
+            <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+              ${Array.from({ length: 10 }).map((_, i) => `
+                <line x1="${i * 10}" y1="0" x2="${i * 10}" y2="100" stroke="currentColor" stroke-width="0.1" class="text-muted-foreground"/>
+                <line x1="0" y1="${i * 10}" x2="100" y2="${i * 10}" stroke="currentColor" stroke-width="0.1" class="text-muted-foreground"/>
+              `).join('')}
+            </svg>
+          </div>
+
+          <!-- 南京市地图 -->
+          <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+            <!-- 简化的南京市边界 -->
+            <path
+              d="M20,15 Q35,10 50,12 Q70,8 80,20 Q85,35 82,50 Q85,65 78,80 Q65,90 50,88 Q35,92 22,82 Q15,70 18,55 Q12,40 20,15 Z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="0.5"
+              class="text-primary"
+              style="opacity: 0.3;"
+              stroke-dasharray="2,2"
+            />
+            
+            <!-- 长江 -->
+            <path
+              d="M10,45 Q30,42 50,48 Q70,52 90,47"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1"
+              class="text-accent"
+              style="opacity: 0.5;"
+              stroke-linecap="round"
+            />
+            <text x="15" y="42" class="text-muted-foreground" style="font-size: 3px;">长江</text>
+            
+            <!-- 玄武湖 -->
+            <ellipse cx="50" cy="25" rx="8" ry="5" fill="currentColor" class="text-accent" style="opacity: 0.2;"/>
+            
+            <!-- 紫金山 -->
+            <path d="M65,25 L75,15 L85,28 L75,30 Z" fill="currentColor" class="text-primary" style="opacity: 0.1;"/>
+            <text x="70" y="22" class="text-muted-foreground" style="font-size: 2.5px;">紫金山</text>
+
+            <!-- 连接线 -->
+            ${lines.map((line, idx) => {
+              const isAnimated = animatedLines.includes(line.index);
+              return `
+                <line
+                  x1="${line.from.mapPosition.x}"
+                  y1="${line.from.mapPosition.y}"
+                  x2="${line.to.mapPosition.x}"
+                  y2="${line.to.mapPosition.y}"
+                  stroke="currentColor"
+                  stroke-width="0.5"
+                  class="text-primary ${isAnimated ? 'animate-pulse-custom' : ''}"
+                  style="opacity: ${isAnimated ? 0.6 : 0.2};"
+                />
+              `;
+            }).join('')}
+
+            <!-- 景点标记 -->
+            ${landmarks.map((landmark, index) => {
+              const isSelected = selectedLandmark?.id === landmark.id;
+              const isAnimated = animatedLines.includes(index) || index === 0;
+              return `
+                <g
+                  class="cursor-pointer"
+                  style="opacity: ${isAnimated ? 1 : 0.3};"
+                  onclick="handleMapClick('${landmark.id}')"
+                >
+                  ${isSelected ? `
+                    <circle
+                      cx="${landmark.mapPosition.x}"
+                      cy="${landmark.mapPosition.y}"
+                      r="4"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="0.3"
+                      class="text-primary animate-ping-custom"
+                    />
+                  ` : ''}
+                  <circle
+                    cx="${landmark.mapPosition.x}"
+                    cy="${landmark.mapPosition.y}"
+                    r="${isSelected ? 3 : 2.5}"
+                    fill="currentColor"
+                    class="text-primary"
+                    style="opacity: ${isSelected ? 1 : 0.7};"
+                  />
+                  <circle
+                    cx="${landmark.mapPosition.x}"
+                    cy="${landmark.mapPosition.y}"
+                    r="1"
+                    fill="white"
+                  />
+                  <text
+                    x="${landmark.mapPosition.x}"
+                    y="${landmark.mapPosition.y - 4}"
+                    text-anchor="middle"
+                    class="${isSelected ? 'text-primary' : 'text-foreground'}"
+                    style="font-size: 2.5px; font-weight: 500; opacity: ${isSelected ? 1 : 0.8};"
+                  >
+                    ${landmark.name}
+                  </text>
+                </g>
+              `;
+            }).join('')}
+          </svg>
+
+          <!-- 图例 -->
+          <div class="absolute bottom-4 left-4 bg-white/80 backdrop-blur-sm rounded-lg p-3 text-xs">
+            <div class="font-medium text-foreground mb-2">南京市旅游地图</div>
+            <div class="flex items-center gap-2 text-muted-foreground">
+              <span class="w-3 h-3 rounded-full bg-primary"></span>
+              <span>旅游景点</span>
+            </div>
+            <div class="flex items-center gap-2 text-muted-foreground mt-1">
+              <span class="w-4 h-0.5 bg-primary" style="opacity: 0.6;"></span>
+              <span>游览路线</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCard(landmark, index) {
+      const isSelected = selectedLandmark?.id === landmark.id;
+      return `
+        <div
+          id="card-${landmark.id}"
+          class="group relative cursor-pointer transition-all duration-500 ease-out animate-fade-in-up ${isSelected ? 'scale-105' : ''}"
+          style="animation-delay: ${index * 100}ms;"
+          onclick="handleCardClick('${landmark.id}')"
+        >
+          <div
+            class="relative overflow-hidden rounded-2xl bg-white shadow-lg border-2 transition-all duration-300 ${
+              isSelected 
+                ? 'border-primary shadow-xl' 
+                : 'border-transparent hover:border-primary/30 hover:shadow-xl'
+            }"
+            style="${isSelected ? 'box-shadow: 0 20px 25px -5px rgba(139, 69, 19, 0.2);' : ''}"
+          >
+            <!-- 图片容器 -->
+            <div class="relative aspect-[4/3] overflow-hidden">
+              <img
+                src="${landmark.image}"
+                alt="${landmark.name}"
+                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${isSelected ? 'scale-110' : ''}"
+              />
+              <!-- 渐变遮罩 -->
+              <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);"></div>
+              
+              <!-- 序号标签 -->
+              <div class="absolute top-3 left-3 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+                ${index + 1}
+              </div>
+            </div>
+
+            <!-- 内容 -->
+            <div class="absolute bottom-0 left-0 right-0 p-4">
+              <h3 class="text-lg font-bold text-white drop-shadow-lg">
+                ${landmark.name}
+              </h3>
+              <p class="text-sm text-white/80 drop-shadow">
+                ${landmark.nameEn}
+              </p>
+            </div>
+          </div>
+
+          <!-- 选中指示器 -->
+          ${isSelected ? `
+            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-white border-r-2 border-b-2 border-primary"></div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function renderDetail() {
+      if (!detailLandmark) return '';
+      return `
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in-up" style="animation-duration: 0.3s;">
+          <!-- 背景遮罩 -->
+          <div 
+            class="absolute inset-0 backdrop-blur-sm"
+            style="background: rgba(0,0,0,0.6);"
+            onclick="closeDetail()"
+          ></div>
+          
+          <!-- 内容卡片 -->
+          <div class="relative w-full max-w-3xl max-h-[90vh] overflow-hidden bg-white rounded-3xl shadow-2xl animate-zoom-in">
+            <!-- 关闭按钮 -->
+            <button
+              class="absolute top-4 right-4 z-10 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors"
+              onclick="closeDetail()"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+
+            <!-- 图片区域 -->
+            <div class="relative h-64 md:h-80 overflow-hidden">
+              <img
+                src="${detailLandmark.image}"
+                alt="${detailLandmark.name}"
+                class="w-full h-full object-cover"
+              />
+              <div class="absolute inset-0" style="background: linear-gradient(to top, white, transparent, transparent);"></div>
+              
+              <!-- 标题覆盖在图片上 -->
+              <div class="absolute bottom-0 left-0 right-0 p-6">
+                <h2 class="text-3xl md:text-4xl font-bold text-white drop-shadow-lg text-balance">
+                  ${detailLandmark.name}
+                </h2>
+                <p class="text-lg text-white/80 drop-shadow mt-1">
+                  ${detailLandmark.nameEn}
+                </p>
+              </div>
+            </div>
+
+            <!-- 内容区域 -->
+            <div class="p-6 space-y-6">
+              <!-- 位置信息 -->
+              <div class="flex items-center gap-4 text-muted-foreground">
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  <span class="text-sm">
+                    ${detailLandmark.coordinates.lat.toFixed(4)}°N, ${detailLandmark.coordinates.lng.toFixed(4)}°E
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                  </svg>
+                  <span class="text-sm">南京市</span>
+                </div>
+              </div>
+
+              <!-- 描述 -->
+              <div>
+                <p class="text-foreground/90 leading-relaxed text-pretty">
+                  ${detailLandmark.description}
+                </p>
+              </div>
+
+              <!-- 操作按钮 -->
+              <div class="flex gap-3 pt-4">
+                <button 
+                  class="flex-1 px-4 py-3 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
+                  onclick="closeDetail()"
+                >
+                  返回地图
+                </button>
+                <button 
+                  class="flex-1 px-4 py-3 border-2 border-border rounded-lg font-medium hover:bg-secondary transition-colors"
+                  onclick="openGoogleMaps()"
+                >
+                  在地图中查看
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindEvents() {
+      // Events are handled inline
+    }
+
+    function handleCardClick(id) {
+      const landmark = landmarks.find(l => l.id === id);
+      if (selectedLandmark?.id === id) {
+        detailLandmark = landmark;
+      } else {
+        selectedLandmark = landmark;
+      }
+      render();
+    }
+
+    function handleMapClick(id) {
+      const landmark = landmarks.find(l => l.id === id);
+      selectedLandmark = landmark;
+      render();
+      
+      setTimeout(() => {
+        const element = document.getElementById(`card-${id}`);
+        element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+
+    function closeDetail() {
+      detailLandmark = null;
+      render();
+    }
+
+    function openGoogleMaps() {
+      if (detailLandmark) {
+        window.open(
+          `https://www.google.com/maps/search/?api=1&query=${detailLandmark.coordinates.lat},${detailLandmark.coordinates.lng}`,
+          '_blank'
+        );
+      }
+    }
+
+    // 初始化动画
+    function initAnimations() {
+      landmarks.forEach((_, index) => {
+        setTimeout(() => {
+          animatedLines.push(index);
+          render();
+        }, index * 300);
+      });
+    }
+
+    // 启动应用
+    render();
+    initAnimations();
+  </script>
+</body>
+</html>
